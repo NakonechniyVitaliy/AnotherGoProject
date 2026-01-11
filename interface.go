@@ -17,7 +17,7 @@ func (card *Cash) Pay(amount int) {
 	fmt.Printf("Оплата наличными: %d \n", amount)
 }
 
-func main() {
+func notMain() {
 	payByCard := Card{}
 	payByCash := Cash{}
 

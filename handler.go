@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
-
-	"github.com/gin-gonic/gin"
+	"studyProject/dao"
+	"studyProject/model"
 )
 
 type ErrorResponce struct {
@@ -13,17 +14,21 @@ type ErrorResponce struct {
 }
 
 type Handler struct {
-	storage Storage
+	storage     Storage
+	EmployeeDAO *dao.EmployeeDAO
 }
 
-func NewHandler(storage Storage) *Handler {
+func NewHandler(storage Storage, EmployeeDAO *dao.EmployeeDAO) *Handler {
 	return &Handler{
-		storage: storage,
+		storage:     storage,
+		EmployeeDAO: EmployeeDAO,
 	}
 }
 
 func (h *Handler) CreateEmployee(c *gin.Context) {
-	var employee Employee
+	ctx := c.Request.Context()
+
+	var employee model.Employee
 
 	if err := c.ShouldBindJSON(&employee); err != nil {
 		fmt.Printf("failed to bind employee: %v", err)
@@ -33,10 +38,15 @@ func (h *Handler) CreateEmployee(c *gin.Context) {
 		return
 	}
 
-	h.storage.Insert(&employee)
-	c.JSON(http.StatusOK, map[string]interface{}{
-		"id": employee.ID,
-	})
+	err := h.EmployeeDAO.NewEmployee(ctx, &employee)
+	if err != nil {
+		return
+	}
+
+	//h.storage.Insert(&employee)
+	//c.JSON(http.StatusOK, map[string]interface{}{
+	//	"id": employee.ID,
+	//})
 
 }
 
@@ -51,7 +61,7 @@ func (h *Handler) UpdateEmployee(c *gin.Context) {
 		return
 	}
 
-	var employee Employee
+	var employee model.Employee
 
 	if err := c.BindJSON(&employee); err != nil {
 		fmt.Printf("failed to bind employee: %v", err)
@@ -62,7 +72,7 @@ func (h *Handler) UpdateEmployee(c *gin.Context) {
 
 	}
 
-	h.storage.Update(id, &employee)
+	h.storage.Update(id, employee)
 	c.JSON(http.StatusOK, map[string]interface{}{
 		"id": employee.ID,
 	})
@@ -103,4 +113,8 @@ func (h *Handler) GetEmployee(c *gin.Context) {
 
 	c.JSON(http.StatusOK, employee)
 
+}
+
+func (h *Handler) GetAllEmployee(c *gin.Context) {
+	c.JSON(http.StatusOK, h.storage.GetAll())
 }
