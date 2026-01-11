@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
 	"studyProject/dao"
 	"studyProject/model"
+
+	"github.com/gin-gonic/gin"
 )
 
 type ErrorResponce struct {
@@ -43,39 +44,38 @@ func (h *Handler) CreateEmployee(c *gin.Context) {
 		return
 	}
 
-	//h.storage.Insert(&employee)
-	//c.JSON(http.StatusOK, map[string]interface{}{
-	//	"id": employee.ID,
-	//})
-
 }
 
-func (h *Handler) UpdateEmployee(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
+func (h *Handler) UpdateEmployee(c *gin.Context) (*model.Employee, error) {
+	ctx := c.Request.Context()
 
+	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		fmt.Printf("failed to convert id param to int: %s", err)
 		c.JSON(http.StatusBadRequest, ErrorResponce{
 			Message: err.Error(),
 		})
-		return
+		return nil, err
+	}
+	currentEmployee, err := h.EmployeeDAO.FindByID(ctx, id)
+	if err != nil {
+		return nil, err
 	}
 
-	var employee model.Employee
-
-	if err := c.BindJSON(&employee); err != nil {
+	var employeeFromRequest model.Employee
+	if err := c.BindJSON(&employeeFromRequest); err != nil {
 		fmt.Printf("failed to bind employee: %v", err)
 		c.JSON(http.StatusBadRequest, ErrorResponce{
 			Message: err.Error(),
 		})
-		return
-
+		return nil, err
 	}
+	currentEmployee.Name = employeeFromRequest.Name
+	currentEmployee.Sex = employeeFromRequest.Sex
+	currentEmployee.Age = employeeFromRequest.Age
+	currentEmployee.Salary = employeeFromRequest.Salary
 
-	h.storage.Update(id, employee)
-	c.JSON(http.StatusOK, map[string]interface{}{
-		"id": employee.ID,
-	})
+	return currentEmployee, h.EmployeeDAO.Update(ctx, currentEmployee)
 }
 
 func (h *Handler) DeleteEmployee(c *gin.Context) {
