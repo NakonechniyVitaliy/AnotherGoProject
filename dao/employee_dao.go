@@ -71,3 +71,19 @@ func (dao *EmployeeDAO) Delete(ctx context.Context, id int) error {
 
 	return nil
 }
+
+func (dao *EmployeeDAO) GetAll(ctx context.Context) ([]*model.Employee, error) {
+
+	cursor, err := dao.c.Find(ctx, bson.M{})
+	if err != nil {
+		return nil, err
+	}
+
+	var employees []*model.Employee
+
+	if err := cursor.All(ctx, &employees); err != nil {
+		return nil, err
+	}
+
+	return employees, nil
+}

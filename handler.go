@@ -116,6 +116,8 @@ func (h *Handler) DeleteEmployee(c *gin.Context) {
 }
 
 func (h *Handler) GetEmployee(c *gin.Context) {
+	ctx := c.Request.Context()
+
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		fmt.Printf("failed to convert id param to int: %s", err)
@@ -124,8 +126,7 @@ func (h *Handler) GetEmployee(c *gin.Context) {
 		})
 	}
 
-	employee, err := h.storage.Get(id)
-
+	employee, err := h.EmployeeDAO.FindByID(ctx, id)
 	if err != nil {
 		fmt.Printf("employee not found: %s", err)
 		c.JSON(http.StatusBadRequest, ErrorResponce{
@@ -139,5 +140,15 @@ func (h *Handler) GetEmployee(c *gin.Context) {
 }
 
 func (h *Handler) GetAllEmployee(c *gin.Context) {
-	c.JSON(http.StatusOK, h.storage.GetAll())
+	ctx := c.Request.Context()
+
+	employees, err := h.EmployeeDAO.GetAll(ctx)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, ErrorResponce{
+			Message: err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, employees)
 }
