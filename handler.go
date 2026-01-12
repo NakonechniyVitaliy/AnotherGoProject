@@ -46,7 +46,7 @@ func (h *Handler) CreateEmployee(c *gin.Context) {
 
 }
 
-func (h *Handler) UpdateEmployee(c *gin.Context) (*model.Employee, error) {
+func (h *Handler) UpdateEmployee(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	id, err := strconv.Atoi(c.Param("id"))
@@ -55,11 +55,15 @@ func (h *Handler) UpdateEmployee(c *gin.Context) (*model.Employee, error) {
 		c.JSON(http.StatusBadRequest, ErrorResponce{
 			Message: err.Error(),
 		})
-		return nil, err
+		return
 	}
 	currentEmployee, err := h.EmployeeDAO.FindByID(ctx, id)
 	if err != nil {
-		return nil, err
+		fmt.Printf("failed to find employee: %s", err)
+		c.JSON(http.StatusBadRequest, ErrorResponce{
+			Message: err.Error(),
+		})
+		return
 	}
 
 	var employeeFromRequest model.Employee
@@ -68,17 +72,28 @@ func (h *Handler) UpdateEmployee(c *gin.Context) (*model.Employee, error) {
 		c.JSON(http.StatusBadRequest, ErrorResponce{
 			Message: err.Error(),
 		})
-		return nil, err
+		return
 	}
 	currentEmployee.Name = employeeFromRequest.Name
 	currentEmployee.Sex = employeeFromRequest.Sex
 	currentEmployee.Age = employeeFromRequest.Age
 	currentEmployee.Salary = employeeFromRequest.Salary
 
-	return currentEmployee, h.EmployeeDAO.Update(ctx, currentEmployee)
+	err = h.EmployeeDAO.Update(ctx, currentEmployee)
+	if err == nil {
+		c.JSON(http.StatusOK, currentEmployee)
+	} else {
+		fmt.Printf("failed to update employee: %s", err)
+		c.JSON(http.StatusBadRequest, ErrorResponce{
+			Message: err.Error(),
+		})
+		return
+	}
 }
 
 func (h *Handler) DeleteEmployee(c *gin.Context) {
+	ctx := c.Request.Context()
+
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		fmt.Printf("failed to convert id param to int: %s", err)
@@ -87,9 +102,17 @@ func (h *Handler) DeleteEmployee(c *gin.Context) {
 		})
 		return
 	}
-	h.storage.Delete(id)
+	err = h.EmployeeDAO.Delete(ctx, id)
+	if err != nil {
+		fmt.Printf("failed to delete employee: %s", err)
+		c.JSON(http.StatusBadRequest, ErrorResponce{
+			Message: err.Error(),
+		})
+		return
+	} else {
+		c.String(http.StatusOK, "employee deleted")
+	}
 
-	c.String(http.StatusOK, "employee deleted")
 }
 
 func (h *Handler) GetEmployee(c *gin.Context) {

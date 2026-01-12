@@ -27,7 +27,7 @@ func (dao *EmployeeDAO) NewEmployee(ctx context.Context, e *model.Employee) erro
 }
 
 func (dao *EmployeeDAO) FindByID(ctx context.Context, id int) (*model.Employee, error) {
-	filter := bson.D{{"_id", id}}
+	filter := bson.D{{"id", id}}
 
 	var Employee model.Employee
 	err := dao.c.FindOne(ctx, filter).Decode(&Employee)
@@ -41,10 +41,10 @@ func (dao *EmployeeDAO) FindByID(ctx context.Context, id int) (*model.Employee, 
 	default:
 		return nil, err
 	}
-
 }
+
 func (dao *EmployeeDAO) Update(ctx context.Context, employee *model.Employee) error {
-	filter := bson.D{{"_id", employee.ID}}
+	filter := bson.D{{"id", employee.ID}}
 
 	result, err := dao.c.ReplaceOne(ctx, filter, employee)
 	if err != nil {
@@ -55,5 +55,19 @@ func (dao *EmployeeDAO) Update(ctx context.Context, employee *model.Employee) er
 		return ErrNotFound
 	}
 	return nil
+}
 
+func (dao *EmployeeDAO) Delete(ctx context.Context, id int) error {
+	filter := bson.D{{"id", id}}
+
+	result, err := dao.c.DeleteOne(ctx, filter)
+	if err != nil {
+		return err
+	}
+
+	if result.DeletedCount == 0 {
+		return ErrNotFound
+	}
+
+	return nil
 }
