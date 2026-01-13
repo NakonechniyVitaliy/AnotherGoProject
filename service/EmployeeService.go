@@ -1,18 +1,10 @@
 package service
 
 import (
-	"fmt"
-	"net/http"
-	"strconv"
+	"context"
 	"studyProject/dao"
 	"studyProject/model"
-
-	"github.com/gin-gonic/gin"
 )
-
-type ErrorResponce struct {
-	Message string `json:"message"`
-}
 
 type EmployeeService struct {
 	EmployeeDAO *dao.EmployeeDAO
@@ -24,130 +16,58 @@ func NewEmployeeService(EmployeeDAO *dao.EmployeeDAO) *EmployeeService {
 	}
 }
 
-func (service *EmployeeService) NewEmployee(c *gin.Context) {
-	ctx := c.Request.Context()
+func (service *EmployeeService) NewEmployee(ctx context.Context, employee *model.Employee) (*model.Employee, error) {
 
-	var employee model.Employee
-
-	if err := c.ShouldBindJSON(&employee); err != nil {
-		fmt.Printf("failed to bind employee: %v", err)
-		c.JSON(http.StatusBadRequest, ErrorResponce{
-			Message: err.Error(),
-		})
-		return
-	}
-
-	err := service.EmployeeDAO.NewEmployee(ctx, &employee)
+	err := service.EmployeeDAO.NewEmployee(ctx, employee)
 	if err != nil {
-		return
-	} else {
-		c.JSON(http.StatusOK, employee)
+		return nil, err
 	}
+	return employee, nil
 }
 
-func (service *EmployeeService) UpdateEmployee(c *gin.Context) {
-	ctx := c.Request.Context()
+func (service *EmployeeService) UpdateEmployee(ctx context.Context, employeeFromRequest *model.Employee, id int) (*model.Employee, error) {
 
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		fmt.Printf("failed to convert id param to int: %s", err)
-		c.JSON(http.StatusBadRequest, ErrorResponce{
-			Message: err.Error(),
-		})
-		return
-	}
 	currentEmployee, err := service.EmployeeDAO.FindByID(ctx, id)
 	if err != nil {
-		fmt.Printf("failed to find employee: %s", err)
-		c.JSON(http.StatusBadRequest, ErrorResponce{
-			Message: err.Error(),
-		})
-		return
+		return nil, err
 	}
 
-	var employeeFromRequest model.Employee
-	if err := c.BindJSON(&employeeFromRequest); err != nil {
-		fmt.Printf("failed to bind employee: %v", err)
-		c.JSON(http.StatusBadRequest, ErrorResponce{
-			Message: err.Error(),
-		})
-		return
-	}
 	currentEmployee.Name = employeeFromRequest.Name
 	currentEmployee.Sex = employeeFromRequest.Sex
 	currentEmployee.Age = employeeFromRequest.Age
 	currentEmployee.Salary = employeeFromRequest.Salary
 
 	err = service.EmployeeDAO.Update(ctx, currentEmployee)
-	if err == nil {
-		c.JSON(http.StatusOK, currentEmployee)
-	} else {
-		fmt.Printf("failed to update employee: %s", err)
-		c.JSON(http.StatusBadRequest, ErrorResponce{
-			Message: err.Error(),
-		})
-		return
+	if err != nil {
+		return nil, err
 	}
+	return currentEmployee, nil
 }
 
-func (service *EmployeeService) DeleteEmployee(c *gin.Context) {
-	ctx := c.Request.Context()
+func (service *EmployeeService) DeleteEmployee(ctx context.Context, id int) error {
 
-	id, err := strconv.Atoi(c.Param("id"))
+	err := service.EmployeeDAO.Delete(ctx, id)
 	if err != nil {
-		fmt.Printf("failed to convert id param to int: %s", err)
-		c.JSON(http.StatusBadRequest, ErrorResponce{
-			Message: err.Error(),
-		})
-		return
+		return err
 	}
-	err = service.EmployeeDAO.Delete(ctx, id)
-	if err != nil {
-		fmt.Printf("failed to delete employee: %s", err)
-		c.JSON(http.StatusBadRequest, ErrorResponce{
-			Message: err.Error(),
-		})
-		return
-	} else {
-		c.String(http.StatusOK, "employee deleted")
-	}
-
+	return nil
 }
 
-func (service *EmployeeService) GetEmployee(c *gin.Context) {
-	ctx := c.Request.Context()
-
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		fmt.Printf("failed to convert id param to int: %s", err)
-		c.JSON(http.StatusBadRequest, ErrorResponce{
-			Message: err.Error(),
-		})
-		return
-	}
+func (service *EmployeeService) GetEmployee(ctx context.Context, id int) (*model.Employee, error) {
 
 	employee, err := service.EmployeeDAO.FindByID(ctx, id)
 	if err != nil {
-		fmt.Printf("employee not found: %s", err)
-		c.JSON(http.StatusBadRequest, ErrorResponce{
-			Message: err.Error(),
-		})
-		return
+		return nil, err
 	}
+	return employee, nil
 
-	c.JSON(http.StatusOK, employee)
 }
 
-func (service *EmployeeService) GetAllEmployee(c *gin.Context) {
-	ctx := c.Request.Context()
+func (service *EmployeeService) GetAllEmployee(ctx context.Context) ([]*model.Employee, error) {
 
 	employees, err := service.EmployeeDAO.GetAll(ctx)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, ErrorResponce{
-			Message: err.Error(),
-		})
-		return
+		return nil, err
 	}
-
-	c.JSON(http.StatusOK, employees)
+	return employees, nil
 }
