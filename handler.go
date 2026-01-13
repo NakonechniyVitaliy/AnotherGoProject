@@ -1,154 +1,36 @@
 package main
 
 import (
-	"fmt"
-	"net/http"
-	"strconv"
-	"studyProject/dao"
-	"studyProject/model"
-
 	"github.com/gin-gonic/gin"
+	"studyProject/service"
 )
 
-type ErrorResponce struct {
-	Message string `json:"message"`
-}
-
 type Handler struct {
-	storage     Storage
-	EmployeeDAO *dao.EmployeeDAO
+	EmployeeService *service.EmployeeService
 }
 
-func NewHandler(storage Storage, EmployeeDAO *dao.EmployeeDAO) *Handler {
+func NewHandler(EmployeeService *service.EmployeeService) *Handler {
 	return &Handler{
-		storage:     storage,
-		EmployeeDAO: EmployeeDAO,
+		EmployeeService: EmployeeService,
 	}
 }
 
 func (h *Handler) CreateEmployee(c *gin.Context) {
-	ctx := c.Request.Context()
-
-	var employee model.Employee
-
-	if err := c.ShouldBindJSON(&employee); err != nil {
-		fmt.Printf("failed to bind employee: %v", err)
-		c.JSON(http.StatusBadRequest, ErrorResponce{
-			Message: err.Error(),
-		})
-		return
-	}
-
-	err := h.EmployeeDAO.NewEmployee(ctx, &employee)
-	if err != nil {
-		return
-	}
-
+	h.EmployeeService.NewEmployee(c)
 }
 
 func (h *Handler) UpdateEmployee(c *gin.Context) {
-	ctx := c.Request.Context()
-
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		fmt.Printf("failed to convert id param to int: %s", err)
-		c.JSON(http.StatusBadRequest, ErrorResponce{
-			Message: err.Error(),
-		})
-		return
-	}
-	currentEmployee, err := h.EmployeeDAO.FindByID(ctx, id)
-	if err != nil {
-		fmt.Printf("failed to find employee: %s", err)
-		c.JSON(http.StatusBadRequest, ErrorResponce{
-			Message: err.Error(),
-		})
-		return
-	}
-
-	var employeeFromRequest model.Employee
-	if err := c.BindJSON(&employeeFromRequest); err != nil {
-		fmt.Printf("failed to bind employee: %v", err)
-		c.JSON(http.StatusBadRequest, ErrorResponce{
-			Message: err.Error(),
-		})
-		return
-	}
-	currentEmployee.Name = employeeFromRequest.Name
-	currentEmployee.Sex = employeeFromRequest.Sex
-	currentEmployee.Age = employeeFromRequest.Age
-	currentEmployee.Salary = employeeFromRequest.Salary
-
-	err = h.EmployeeDAO.Update(ctx, currentEmployee)
-	if err == nil {
-		c.JSON(http.StatusOK, currentEmployee)
-	} else {
-		fmt.Printf("failed to update employee: %s", err)
-		c.JSON(http.StatusBadRequest, ErrorResponce{
-			Message: err.Error(),
-		})
-		return
-	}
+	h.EmployeeService.UpdateEmployee(c)
 }
 
 func (h *Handler) DeleteEmployee(c *gin.Context) {
-	ctx := c.Request.Context()
-
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		fmt.Printf("failed to convert id param to int: %s", err)
-		c.JSON(http.StatusBadRequest, ErrorResponce{
-			Message: err.Error(),
-		})
-		return
-	}
-	err = h.EmployeeDAO.Delete(ctx, id)
-	if err != nil {
-		fmt.Printf("failed to delete employee: %s", err)
-		c.JSON(http.StatusBadRequest, ErrorResponce{
-			Message: err.Error(),
-		})
-		return
-	} else {
-		c.String(http.StatusOK, "employee deleted")
-	}
-
+	h.EmployeeService.DeleteEmployee(c)
 }
 
 func (h *Handler) GetEmployee(c *gin.Context) {
-	ctx := c.Request.Context()
-
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		fmt.Printf("failed to convert id param to int: %s", err)
-		c.JSON(http.StatusBadRequest, ErrorResponce{
-			Message: err.Error(),
-		})
-	}
-
-	employee, err := h.EmployeeDAO.FindByID(ctx, id)
-	if err != nil {
-		fmt.Printf("employee not found: %s", err)
-		c.JSON(http.StatusBadRequest, ErrorResponce{
-			Message: err.Error(),
-		})
-		return
-	}
-
-	c.JSON(http.StatusOK, employee)
-
+	h.EmployeeService.GetEmployee(c)
 }
 
 func (h *Handler) GetAllEmployee(c *gin.Context) {
-	ctx := c.Request.Context()
-
-	employees, err := h.EmployeeDAO.GetAll(ctx)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, ErrorResponce{
-			Message: err.Error(),
-		})
-		return
-	}
-
-	c.JSON(http.StatusOK, employees)
+	h.EmployeeService.GetAllEmployee(c)
 }

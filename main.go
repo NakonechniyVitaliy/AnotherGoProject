@@ -3,11 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
+	"studyProject/dao"
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"studyProject/dao"
-	"time"
+	"studyProject/service"
 )
 
 func main() {
@@ -18,9 +20,12 @@ func main() {
 	client := createMongoDBclient(ctx)
 
 	EmployeeDAO, err := dao.NewEmployeeDAO(ctx, client)
+	if err != nil {
+		return
+	}
 
-	memoryStorage := newMemoryStorage()
-	handler := NewHandler(memoryStorage, EmployeeDAO)
+	EmployeeService := service.NewEmployeeService(EmployeeDAO)
+	handler := NewHandler(EmployeeService)
 
 	router := gin.Default()
 	router.POST("/employee", handler.CreateEmployee)
