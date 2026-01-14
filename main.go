@@ -3,38 +3,43 @@ package main
 import (
 	"context"
 	"fmt"
-	"studyProject/dao"
+	"studyProject/handler"
+	"studyProject/repository"
+	routerPkg "studyProject/router"
+	"studyProject/service"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"studyProject/service"
 )
 
 func main() {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-
 	client := createMongoDBclient(ctx)
 
-	EmployeeDAO, err := dao.NewEmployeeDAO(ctx, client)
+	EmployeeDAO, err := repository.NewEmployeeDAO(ctx, client)
+	if err != nil {
+		return
+	}
+	DepartmentDAO, err := repository.NewDepartmentDAO(ctx, client)
 	if err != nil {
 		return
 	}
 
 	EmployeeService := service.NewEmployeeService(EmployeeDAO)
-	handler := NewHandler(EmployeeService)
+	DepartmentService := service.NewDepartmentService(DepartmentDAO)
+
+	appHandler := handler.NewHandler(EmployeeService, DepartmentService)
 
 	router := gin.Default()
-	router.POST("/employee", handler.CreateEmployee)
-	router.GET("/employee/:id", handler.GetEmployee)
-	router.GET("/employees", handler.GetAllEmployee)
-	router.PUT("/employee/:id", handler.UpdateEmployee)
-	router.DELETE("/employee/:id", handler.DeleteEmployee)
 
-	err = router.Run(":8000")
+	routerPkg.RegisterDepartmentRoutes(router, appHandler)
+	routerPkg.RegisterEmployeeRoutes(router, appHandler)
+
+	err = router.Run(":8001")
 	if err != nil {
 		return
 	}

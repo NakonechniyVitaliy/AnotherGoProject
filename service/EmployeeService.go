@@ -2,15 +2,15 @@ package service
 
 import (
 	"context"
-	"studyProject/dao"
 	"studyProject/model"
+	"studyProject/repository"
 )
 
 type EmployeeService struct {
-	EmployeeDAO *dao.EmployeeDAO
+	EmployeeDAO *repository.EmployeeDAO
 }
 
-func NewEmployeeService(EmployeeDAO *dao.EmployeeDAO) *EmployeeService {
+func NewEmployeeService(EmployeeDAO *repository.EmployeeDAO) *EmployeeService {
 	return &EmployeeService{
 		EmployeeDAO: EmployeeDAO,
 	}
@@ -66,6 +66,15 @@ func (service *EmployeeService) GetEmployee(ctx context.Context, id int) (*model
 func (service *EmployeeService) GetAllEmployee(ctx context.Context) ([]*model.Employee, error) {
 
 	employees, err := service.EmployeeDAO.GetAll(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return employees, nil
+}
+
+func (service *EmployeeService) GetAllEmployeeByDepartment(ctx context.Context, departmentId int) ([]*model.Employee, error) {
+
+	employees, err := service.EmployeeDAO.GetAllByDepartment(ctx, departmentId)
 	if err != nil {
 		return nil, err
 	}
