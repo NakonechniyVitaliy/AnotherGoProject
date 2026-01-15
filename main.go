@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"studyProject/handler"
-	"studyProject/repository"
+	mongo2 "studyProject/repository/mongo"
 	routerPkg "studyProject/router"
 	"studyProject/service"
 	"time"
@@ -20,11 +20,11 @@ func main() {
 	defer cancel()
 	client := createMongoDBclient(ctx)
 
-	EmployeeDAO, err := repository.NewEmployeeDAO(ctx, client)
+	EmployeeDAO, err := mongo2.NewEmployeeDAO(ctx, client)
 	if err != nil {
 		return
 	}
-	DepartmentDAO, err := repository.NewDepartmentDAO(ctx, client)
+	DepartmentDAO, err := mongo2.NewDepartmentDAO(ctx, client)
 	if err != nil {
 		return
 	}

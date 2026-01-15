@@ -18,5 +18,3 @@ func RegisterEmployeeRoutes(r *gin.Engine, h *handler.Handler) {
 		employees.GET("/by-department/:id", h.GetAllEmployeeByDepartment)
 	}
 }
-
-// test

@@ -23,7 +23,7 @@ func (h *Handler) CreateDepartment(c *gin.Context) {
 		return
 	}
 
-	createdDepartment, err := h.DepartmentService.NewDepartment(ctx, &department)
+	createdDepartment, err := h.DepartmentService.Create(ctx, &department)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, ErrorResponce{
 			Message: err.Error(),
@@ -55,7 +55,7 @@ func (h *Handler) UpdateDepartment(c *gin.Context) {
 	}
 
 	var updatedDepartment *model.Department
-	updatedDepartment, err = h.DepartmentService.UpdateDepartment(ctx, &departmentFromRequest, id)
+	updatedDepartment, err = h.DepartmentService.Update(ctx, &departmentFromRequest, id)
 
 	if err != nil {
 		switch {
@@ -83,7 +83,7 @@ func (h *Handler) DeleteDepartment(c *gin.Context) {
 		return
 	}
 
-	err = h.DepartmentService.DeleteDepartment(ctx, id)
+	err = h.DepartmentService.Delete(ctx, id)
 	if err != nil {
 		fmt.Printf("failed to delete department: %s", err)
 		c.JSON(http.StatusBadRequest, ErrorResponce{
@@ -108,7 +108,7 @@ func (h *Handler) GetDepartment(c *gin.Context) {
 	}
 
 	var department *model.Department
-	department, err = h.DepartmentService.GetDepartment(ctx, id)
+	department, err = h.DepartmentService.FindByID(ctx, id)
 
 	if err != nil {
 		fmt.Printf("department not found: %s", err)
@@ -125,7 +125,7 @@ func (h *Handler) GetAllDepartment(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	var departments []*model.Department
-	departments, err := h.DepartmentService.GetAllDepartment(ctx)
+	departments, err := h.DepartmentService.GetAll(ctx)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, ErrorResponce{
 			Message: err.Error(),

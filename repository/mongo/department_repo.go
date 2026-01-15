@@ -1,8 +1,9 @@
-package repository
+package mongo
 
 import (
 	"context"
 	"studyProject/model"
+	"studyProject/repository"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -18,7 +19,7 @@ func NewDepartmentDAO(ctx context.Context, client *mongo.Client) (*DepartmentDAO
 	}, nil
 }
 
-func (dao *DepartmentDAO) NewDepartment(ctx context.Context, e *model.Department) error {
+func (dao *DepartmentDAO) Create(ctx context.Context, e *model.Department) error {
 	_, err := dao.c.InsertOne(ctx, e)
 	return err
 }
@@ -33,7 +34,7 @@ func (dao *DepartmentDAO) FindByID(ctx context.Context, id int) (*model.Departme
 	case err == nil:
 		return &Department, nil
 	case err == mongo.ErrNoDocuments:
-		return nil, ErrNotFound
+		return nil, repository.ErrNotFound
 
 	default:
 		return nil, err
@@ -49,7 +50,7 @@ func (dao *DepartmentDAO) Update(ctx context.Context, department *model.Departme
 	}
 
 	if result.MatchedCount == 0 {
-		return ErrNotFound
+		return repository.ErrNotFound
 	}
 	return nil
 }
@@ -63,7 +64,7 @@ func (dao *DepartmentDAO) Delete(ctx context.Context, id int) error {
 	}
 
 	if result.DeletedCount == 0 {
-		return ErrNotFound
+		return repository.ErrNotFound
 	}
 
 	return nil
